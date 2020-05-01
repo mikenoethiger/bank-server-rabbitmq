@@ -1,0 +1,7 @@
+out
+bin
+docs
+build
+.idea
+.gradle
+*.class
