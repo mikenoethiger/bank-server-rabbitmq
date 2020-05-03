@@ -1,37 +1,25 @@
-package bank;
+package bank.protocol;
+
+import bank.Account;
+import bank.InactiveException;
+import bank.OverdrawException;
 
 import java.io.IOException;
-import java.util.Date;
 
 /**
- * Server side Account implementation.
+ * Default account implementation.
  *
- * Use it in your server implementations.
- * (Or copy it to your server implementation code base.)
+ * You may want to override {@link DefaultAccount#deposit(double)} and {@link DefaultAccount#withdraw(double)}
+ * for client implementations in order to send server requests.
  */
-public class ServerAccount implements Account {
-
-    private static final String IBAN_PREFIX = "CH56";
-    private static final Object LOCK = new Object();
-    private static long next_account_number = 1000_0000_0000_0000_0L;
+public class DefaultAccount implements Account {
 
     private String number;
     private String owner;
     private double balance;
     private boolean active = true;
 
-    private Date lastModified;
-
-    public ServerAccount() {}
-
-    public ServerAccount(String owner) {
-        this.owner = owner;
-        synchronized (LOCK) {
-            this.number = IBAN_PREFIX + next_account_number++;
-        }
-        this.balance = 0;
-        lastModified = new Date();
-    }
+    public DefaultAccount() {}
 
     @Override
     public double getBalance() {
@@ -53,12 +41,12 @@ public class ServerAccount implements Account {
         return active;
     }
 
+
     @Override
     public void deposit(double amount) throws IOException, InactiveException {
         if (!isActive()) throw new InactiveException();
         if (amount < 0) throw new IllegalArgumentException("negative amount not allowed");
         balance += amount;
-        lastModified = new Date();
     }
 
     @Override
@@ -67,27 +55,27 @@ public class ServerAccount implements Account {
         if (amount > balance) throw new OverdrawException();
         if (!isActive()) throw new InactiveException();
         balance -= amount;
-        lastModified = new Date();
     }
 
     public void setBalance(double balance) {
         this.balance = balance;
-        lastModified = new Date();
     }
 
-    void makeInactive() {
-        active = false;
-        lastModified = new Date();
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @Override
     public String toString() {
-        return "ServerAccount{" +
-                "number='" + number + '\'' +
-                ", owner='" + owner + '\'' +
-                ", balance=" + balance +
-                ", active=" + active +
-                ", lastModified=" + lastModified +
-                '}';
+        /* common structure in responses, e.g. https://github.com/mikenoethiger/bank-server-socket#get-account-2 */
+        return String.format("%s\n%s\n%s\n%s", number, owner, balance, active);
     }
 }

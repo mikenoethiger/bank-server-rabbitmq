@@ -1,5 +1,8 @@
 package bank;
 
+import bank.protocol.InMemoryBank;
+import bank.protocol.Request;
+import bank.protocol.Response;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.rabbitmq.client.*;
@@ -40,7 +43,7 @@ public class Server {
     private static final Response ERROR_BAD_REQUEST = new Response(7, new String[]{"Bad request."});
     private static final Response ERROR_INTERNAL_ERROR = new Response(8, new String[]{"Internal error."});
 
-    private final Bank bank = new ServerBank();
+    private final Bank bank = new InMemoryBank();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private Connection connection;
     private Channel channel;

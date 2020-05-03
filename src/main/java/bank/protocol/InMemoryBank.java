@@ -1,4 +1,9 @@
-package bank;
+package bank.protocol;
+
+import bank.Account;
+import bank.Bank;
+import bank.InactiveException;
+import bank.OverdrawException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -7,35 +12,38 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Server side Bank implementation.
- *
- * Uses a HashMap to store accounts in memory.
- * Use it in your server implementations.
- * (Or copy it to your server implementation code base.)
+ * In memory {@link Bank implementation} (i.e. {@link Account}'s are stored in a {@link HashMap}.)
  */
-public class ServerBank implements Bank {
+public class InMemoryBank implements Bank {
 
-    private final Map<String, ServerAccount> accounts = new HashMap<>();
+    private static final String IBAN_PREFIX = "CH56";
+    private static long nextAccountNumber = 1000_0000_0000_0000_0L;
+
+    private final Map<String, DefaultAccount> accounts = new HashMap<>();
 
     @Override
     public Set<String> getAccountNumbers() {
-        return accounts.values().stream().filter(ServerAccount::isActive).map(ServerAccount::getNumber).collect(Collectors.toSet());
+        return accounts.values().stream().filter(DefaultAccount::isActive).map(DefaultAccount::getNumber).collect(Collectors.toSet());
     }
 
     @Override
-    public String createAccount(String owner) throws IOException {
-        ServerAccount a = new ServerAccount(owner);
-        accounts.put(a.getNumber(), a);
-        return a.getNumber();
+    synchronized public String createAccount(String owner) throws IOException {
+        DefaultAccount acc = new DefaultAccount();
+        acc.setOwner(owner);
+        acc.setBalance(0);
+        acc.setActive(true);
+        acc.setNumber(IBAN_PREFIX + nextAccountNumber++);
+        accounts.put(acc.getNumber(), acc);
+        return acc.getNumber();
     }
 
     @Override
     public boolean closeAccount(String number) throws IOException {
         if (!accounts.containsKey(number)) return false;
-        ServerAccount a = accounts.get(number);
+        DefaultAccount a = accounts.get(number);
         if (!a.isActive()) return false;
         if (a.getBalance() > 0) return false;
-        a.makeInactive();
+        a.setActive(false);
         return true;
     }
 
