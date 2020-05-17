@@ -143,6 +143,9 @@ public class Server {
 
         Account acc = bank.getAccount(number);
         publishUpdate(acc.getNumber());
+        
+        // XXX eigentlich braucht es ja nur die Nummer, denn der Saldo ist bei einem neuen Konto ja immer 0, und aktiv ist es ebenfalls, und den Owner kennt der 
+        //     Klient ebenfalls (aber dies ist nicht eine Bemerkung zu RabbitMQ sondern zum Protokoll allgemein).
         return new Response(STATUS_OK, new String[]{acc.getNumber(), acc.getOwner(), String.valueOf(acc.getBalance()), acc.isActive() ? "1" : "0"});
     }
 
